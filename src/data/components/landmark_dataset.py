@@ -20,24 +20,26 @@ class LandmarksDataset(Dataset):
     def __getitem__(self, index):
         sample: dict = self.samples[index]
 
-        file_name = sample["file_name"]
+        file_name = sample["file"]
         img_path = os.path.join(self.data_dir, file_name)
 
+        # Get image
         img = Image.open(img_path).convert("RGB")
 
+        # Get bounding box
         box_left = sample["box_left"]
         box_top = sample["box_top"]
         box_width = sample["box_width"]
         box_height = sample["box_height"]
 
-        # crop image
+        # Crop image
         img = img.crop((box_left, box_top, box_left + box_width, box_top + box_height))
+        img = np.array(img)
 
-        # normalize landmarks
+        # Normalize landmarks
         landmarks = np.array(sample["landmarks"]) - np.array([box_left, box_top])
 
         if self.transforms:
-            img = np.array(img)
             transformed = self.transforms(image=img, keypoints=landmarks)
             img = transformed["image"]
             landmarks = transformed["keypoints"]
@@ -60,8 +62,8 @@ class LandmarksDataset(Dataset):
         Returns:
             torch.Tensor: _description_
         """
-        img = img.clone()
-        landmarks = landmarks.clone()
+        img = img.cpu().clone()
+        landmarks = landmarks.cpu().clone()
 
         _, height, width = img.shape
         landmarks += 0.5
@@ -69,13 +71,17 @@ class LandmarksDataset(Dataset):
         img = img.permute(1, 2, 0).numpy()
         img = Image.fromarray((img * 255).astype(np.uint8))
         draw = ImageDraw.Draw(img)
-        if is_ground_truth:
-            for x, y in landmarks:
-                draw.ellipse((x - 2, y - 2, x + 2, y + 2), fill=(0, 255, 0))
-        else:
-            for x, y in landmarks:
-                draw.ellipse((x - 2, y - 2, x + 2, y + 2), fill=(255, 0, 0))
 
+        # Set color
+        if is_ground_truth:
+            color = (0, 255, 0)  # Green for ground truth
+        else:
+            color = (255, 0, 0)  # Red for predict
+        # Draw landmarks
+        for x, y in landmarks:
+            draw.ellipse((x - 2, y - 2, x + 2, y + 2), fill=color)
+
+        # Convert to torch.Tensor
         img = np.array(img).astype(np.float32) / 255.0
         img = ToTensorV2()(image=img)["image"]
         return img
@@ -109,7 +115,7 @@ class LandmarksDataset(Dataset):
 
         Returns:
             dict: {
-                "file_name": str,
+                "file": str,
                 "width": int,
                 "height": int,
                 "box_top": int,
@@ -119,7 +125,7 @@ class LandmarksDataset(Dataset):
                 "landmarks": np.array()
             }
         """
-        file_name = image.attrib["file"]
+        file = image.attrib["file"]
         width = int(image.attrib["width"])
         height = int(image.attrib["height"])
 
@@ -132,7 +138,7 @@ class LandmarksDataset(Dataset):
         landmarks = np.array([[float(part.attrib["x"]), float(part.attrib["y"])] for part in box])
 
         return dict(
-            file_name=file_name,
+            file=file,
             width=width,
             height=height,
             box_top=box_top,

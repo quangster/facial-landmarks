@@ -115,7 +115,6 @@ class LandmarksLitModule(LightningModule):
         :param batch_idx: The index of the current batch.
         :return: A tensor of losses between model predictions and targets.
         """
-        self.net.train()
         loss, preds, targets = self.model_step(batch)
 
         # update metrics
@@ -140,9 +139,8 @@ class LandmarksLitModule(LightningModule):
             labels.
         :param batch_idx: The index of the current batch.
         """
-        self.net.eval()
-        with torch.inference_mode():
-            loss, preds, targets = self.model_step(batch)
+
+        loss, preds, targets = self.model_step(batch)
 
         # update metrics
         self.val_loss(loss)
