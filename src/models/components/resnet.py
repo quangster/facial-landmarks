@@ -19,7 +19,7 @@ class ResNet(nn.Module):
 
         # freeze all weights
         for p in self.feature_extractor.parameters():
-            p.requires_grad = True
+            p.requires_grad = False
 
         num_features = backbone.fc.in_features
         self.output_layer = nn.Linear(

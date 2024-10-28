@@ -1,11 +1,5 @@
 _target_: src.models.LandmarksLitModule
 
-net:
-  _target_: src.models.components.ResNet
-  model_name: resnet18
-  weights: DEFAULT
-  output_shape: [68, 2]
-
 optimizer:
   _target_: torch.optim.Adam
   _partial_: true

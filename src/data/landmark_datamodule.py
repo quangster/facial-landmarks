@@ -1,9 +1,8 @@
 from typing import Any, Dict, Optional, Tuple
 
 import albumentations as A
-import torch
 from lightning import LightningDataModule
-from torch.utils.data import DataLoader, Dataset, random_split
+from torch.utils.data import DataLoader, Dataset
 
 from .components import LandmarksDataset
 
@@ -49,7 +48,7 @@ class LandmarksDataModule(LightningDataModule):
     def __init__(
         self,
         data_dir: str = "data/",
-        train_val_split: Tuple[int, int, int] = (6000, 666),
+        train_val_split: Tuple[int, int] = (6666, 1008),
         train_transform: Optional[A.Compose] = None,
         val_transform: Optional[A.Compose] = None,
         batch_size: int = 64,
@@ -59,7 +58,7 @@ class LandmarksDataModule(LightningDataModule):
         """Initialize a `LandmarksDataModule`.
 
         :param data_dir: The data directory. Defaults to `"data/"`.
-        :param train_val_test_split: The train, validation and test split. Defaults to `(6000, 666, 1008)`.
+        :param train_val_test_split: The train, validation and test split. Defaults to `(6666, 1008)`.
         :param batch_size: The batch size. Defaults to `64`.
         :param num_workers: The number of workers. Defaults to `0`.
         :param pin_memory: Whether to pin memory. Defaults to `False`.
@@ -104,22 +103,15 @@ class LandmarksDataModule(LightningDataModule):
         #         )
         #     self.batch_size_per_device = self.hparams.batch_size // self.trainer.world_size
 
-        # All train dataset
-        train_val_dataset = LandmarksDataset(
+        # Train dataset
+        self.train_dataset = LandmarksDataset(
             self.hparams.data_dir, "labels_ibug_300W_train.xml", self.hparams.train_transform
         )
-        # Split train, val dataset
-        self.train_dataset, self.val_dataset = random_split(
-            train_val_dataset,
-            self.hparams.train_val_split,
-            generator=torch.Generator().manual_seed(42),
-        )
-        # Test dataset
+
+        # Dev/Test dataset
         self.test_dataset = LandmarksDataset(
             self.hparams.data_dir, "labels_ibug_300W_test.xml", self.hparams.val_transform
         )
-        # Fix transforms for val_dataset
-        self.val_dataset.transforms = self.hparams.val_transform
 
     def train_dataloader(self) -> DataLoader[Any]:
         """Create and return the train dataloader.
@@ -140,7 +132,7 @@ class LandmarksDataModule(LightningDataModule):
         :return: The validation dataloader.
         """
         return DataLoader(
-            dataset=self.val_dataset,
+            dataset=self.test_dataset,
             batch_size=self.batch_size_per_device,
             num_workers=self.hparams.num_workers,
             pin_memory=self.hparams.pin_memory,

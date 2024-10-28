@@ -62,9 +62,8 @@ class LandmarksDataset(Dataset):
         Returns:
             torch.Tensor: _description_
         """
-        img = img.cpu().clone()
-        landmarks = landmarks.cpu().clone()
-
+        # img = img.cpu().clone()
+        # landmarks = landmarks.cpu().clone()
         _, height, width = img.shape
         landmarks += 0.5
         landmarks *= np.array([width, height])
@@ -77,6 +76,7 @@ class LandmarksDataset(Dataset):
             color = (0, 255, 0)  # Green for ground truth
         else:
             color = (255, 0, 0)  # Red for predict
+
         # Draw landmarks
         for x, y in landmarks:
             draw.ellipse((x - 2, y - 2, x + 2, y + 2), fill=color)

@@ -86,6 +86,8 @@ class LandmarksLitModule(LightningModule):
         """Lightning hook that is called when training begins."""
         # by default lightning executes validation step sanity checks before training starts,
         # so it's worth to make sure validation metrics don't store results from these checks
+        self.val_loss.reset()
+        self.val_mae.reset()
         self.val_mae_best.reset()
 
     def model_step(
@@ -125,12 +127,34 @@ class LandmarksLitModule(LightningModule):
         self.log("train/loss", self.train_loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("train/mae", self.train_mae, on_step=False, on_epoch=True, prog_bar=True)
 
+        # save last batch
+        x, y = batch
+        self.train_last_batch = {
+            "images": x.detach(),
+            "targets": y.detach(), 
+            "preds": preds.detach(),
+        }
+
         # return loss or backpropagation will fail
         return loss
 
     def on_train_epoch_end(self) -> None:
         "Lightning hook that is called when a training epoch ends."
-        pass
+        # log images of last batch if using WandbLogger
+        if isinstance(self.logger, WandbLogger):
+            # convert batch to list(images)
+            images = list(torch.unbind(self.train_last_batch["images"], dim=0))[:16]
+            targets = list(torch.unbind(self.train_last_batch["targets"], dim=0))[:16]
+            preds = list(torch.unbind(self.train_last_batch["preds"], dim=0))[:16]
+
+            imgs = []
+            for img, target, pred in zip(images, targets, preds):
+                # draw target landmarks: green
+                img = LandmarksDataset.annotate_landmarks(img, target, True)
+                # draw predict landmarks: red
+                img = LandmarksDataset.annotate_landmarks(img, pred, False)
+                imgs.append(img)
+            self.logger.log_image(key="train_image", images=imgs)
 
     def validation_step(self, batch: Tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> None:
         """Perform a single validation step on a batch of data from the validation set.
@@ -152,7 +176,11 @@ class LandmarksLitModule(LightningModule):
 
         # save last batch
         x, y = batch
-        self.val_last_batch = {"images": x, "targets": y, "preds": preds}
+        self.val_last_batch = {
+            "images": x.detach(),
+            "targets": y.detach(), 
+            "preds": preds.detach(),
+        }
 
     def on_validation_epoch_end(self) -> None:
         "Lightning hook that is called when a validation epoch ends."
@@ -164,15 +192,15 @@ class LandmarksLitModule(LightningModule):
         # log images of last batch if using WandbLogger
         if isinstance(self.logger, WandbLogger):
             # convert batch to list(images)
-            images = list(torch.unbind(self.val_last_batch["images"], dim=0))
-            targets = list(torch.unbind(self.val_last_batch["targets"], dim=0))
-            preds = list(torch.unbind(self.val_last_batch["preds"], dim=0))
+            images = list(torch.unbind(self.val_last_batch["images"], dim=0))[:16]
+            targets = list(torch.unbind(self.val_last_batch["targets"], dim=0))[:16]
+            preds = list(torch.unbind(self.val_last_batch["preds"], dim=0))[:16]
 
             imgs = []
             for img, target, pred in zip(images, targets, preds):
                 # draw target landmarks: green
                 img = LandmarksDataset.annotate_landmarks(img, target, True)
-                # draw target landmarks: red
+                # draw predict landmarks: red
                 img = LandmarksDataset.annotate_landmarks(img, pred, False)
                 imgs.append(img)
             self.logger.log_image(key="val_image", images=imgs)
