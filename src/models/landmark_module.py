@@ -130,9 +130,9 @@ class LandmarksLitModule(LightningModule):
         # save last batch
         x, y = batch
         self.train_last_batch = {
-            "images": x.detach(),
-            "targets": y.detach(), 
-            "preds": preds.detach(),
+            "images": x.detach().to('cpu'),
+            "targets": y.detach().to('cpu'), 
+            "preds": preds.detach().to('cpu'),
         }
 
         # return loss or backpropagation will fail
@@ -143,9 +143,9 @@ class LandmarksLitModule(LightningModule):
         # log images of last batch if using WandbLogger
         if isinstance(self.logger, WandbLogger):
             # convert batch to list(images)
-            images = list(torch.unbind(self.train_last_batch["images"], dim=0))[:16]
-            targets = list(torch.unbind(self.train_last_batch["targets"], dim=0))[:16]
-            preds = list(torch.unbind(self.train_last_batch["preds"], dim=0))[:16]
+            images = list(torch.unbind(self.train_last_batch["images"], dim=0))[:10]
+            targets = list(torch.unbind(self.train_last_batch["targets"], dim=0))[:10]
+            preds = list(torch.unbind(self.train_last_batch["preds"], dim=0))[:10]
 
             imgs = []
             for img, target, pred in zip(images, targets, preds):
@@ -177,9 +177,9 @@ class LandmarksLitModule(LightningModule):
         # save last batch
         x, y = batch
         self.val_last_batch = {
-            "images": x.detach(),
-            "targets": y.detach(), 
-            "preds": preds.detach(),
+            "images": x.detach().to('cpu'),
+            "targets": y.detach().to('cpu'), 
+            "preds": preds.detach().to('cpu'),
         }
 
     def on_validation_epoch_end(self) -> None:

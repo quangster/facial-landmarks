@@ -1,0 +1,24 @@
+_target_: src.models.LandmarksLitModule
+
+net:
+  _target_: src.models.components.MobileNet
+  model_name: mobilenet_v3_large
+  weights: MobileNet_V3_Large_Weights.IMAGENET1K_V2
+  output_shape: [68, 2]
+  transfer: false
+
+optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 0.01
+  weight_decay: 0.0
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  _partial_: true
+  mode: min
+  factor: 0.1
+  patience: 10
+
+# compile model for faster training with pytorch 2.0
+compile: false
