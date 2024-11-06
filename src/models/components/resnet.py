@@ -4,33 +4,14 @@ from torchvision import models
 
 
 class ResNet(nn.Module):
-    def __init__(
-        self,
-        model_name: str = "resnet18",
-        weights: str = "DEFAULT",
-        output_shape: list = [68, 2],
-    ):
+    def __init__(self, model_name: str = "resnet18", weights: str = "DEFAULT"):
         super().__init__()
-
-        self.output_shape = output_shape
-        backbone = models.get_model(name=model_name, weights=weights)
-        layers = list(backbone.children())[:-1]
-        self.feature_extractor = nn.Sequential(*layers)
-
-        # freeze all weights
-        for p in self.feature_extractor.parameters():
-            p.requires_grad = False
-
-        num_features = backbone.fc.in_features
-        self.output_layer = nn.Linear(
-            in_features=num_features, out_features=output_shape[0] * output_shape[1]
-        )
+        self.network = models.get_model(name="resnet18", weights=weights)
+        self.network.fc = nn.Linear(self.network.fc.in_features, 136)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.feature_extractor(x)
-        x = x.view(x.size(0), -1)
-        x = self.output_layer(x)
-        x = x.reshape(x.size(0), self.output_shape[0], self.output_shape[1])
+        x = self.network(x)
+        x = x.reshape(x.size(0), 68, 2)
         return x
 
 

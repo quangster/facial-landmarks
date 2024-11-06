@@ -14,18 +14,20 @@ defaults:
 
 tags: ["filter", "resnet18"]
 seed: 59
-# ckpt_path: /home/quangster/Workspace/filter-tiktok/facial-landmarks/logs/train/runs/2024-10-25_20-56-52/checkpoints/epoch_008.ckpt
+# ckpt_path: /mnt/apple/k66/filter/project/quangbd/facial-landmarks/logs/train/runs/2024-10-30_14-40-12/checkpoints/epoch_042.ckpt
 
 
 # ------------------override paths------------------
 # paths:
-  # data_dir: ${paths.root_dir}/../../../
+#   data_dir: ${paths.root_dir}/../../../
 
 
 # ------------------override configs/trainer------------------
 trainer:
   min_epochs: 1 # prevents early stopping
-  max_epochs: 10
+  max_epochs: 50
+  accelerator: gpu
+  devices: 1
 
 
 # ------------------override configs/model------------------
@@ -34,7 +36,6 @@ model:
     _target_: src.models.components.ResNet
     model_name: resnet18
     weights: DEFAULT
-    output_shape: [68, 2]
 
     # _target_: src.models.components.CNN
     # output_shape: [68, 2]
@@ -43,13 +44,13 @@ model:
     # model_name: mobilenet_v3_large
     # weights: MobileNet_V3_Large_Weights.IMAGENET1K_V2
     # output_shape: [68, 2]
-    # transfer: true
+    # transfer: false
 
   optimizer:
     _target_: torch.optim.Adam
     _partial_: true
     lr: 0.001
-    weight_decay: 0.0
+    weight_decay: 0.001
 
   scheduler:
     _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
@@ -61,8 +62,8 @@ model:
 
 # ------------------override configs/data------------------
 data:
-  batch_size: 64
-  num_workers: 0
+  batch_size: 32
+  num_workers: 2
   pin_memory: false
 
   train_transform:
@@ -72,26 +73,24 @@ data:
         width: 256
         always_apply: true
       - _target_: albumentations.Blur
-        p: 0.2
+        p: 0.5
       - _target_: albumentations.RGBShift
-        r_shift_limit: 15
-        g_shift_limit: 15
-        b_shift_limit: 15
-        p: 0.2 
+        r_shift_limit: 50
+        g_shift_limit: 50
+        b_shift_limit: 50
+        p: 0.5
       - _target_: albumentations.RandomBrightnessContrast
-        p: 0.2
+        p: 0.5
       - _target_: albumentations.ToGray
-        p: 0.2
+        p: 0.5
       - _target_: albumentations.HueSaturationValue
-        p: 0.2
-      - _target_: albumentations.HorizontalFlip
-        p: 0.2
+        p: 0.5
       - _target_: albumentations.CoarseDropout
-        num_holes_range: [3, 8]
-        hole_height_range: [10, 20]
-        hole_width_range: [10, 20]
+        num_holes_range: [5, 10]
+        hole_height_range: [10, 30]
+        hole_width_range: [10, 30]
         fill_value: 0
-        p: 0.2
+        p: 0.5
       - _target_: albumentations.ToFloat
         max_value: 255
         always_apply: true
