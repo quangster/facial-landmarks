@@ -71,3 +71,8 @@ You can override any parameter from command line like this
 ```bash
 python src/train.py trainer.max_epochs=20 data.batch_size=64
 ```
+
+## Results
+[Wandb Reports](https://wandb.ai/quangster-vietnam-national-university-hanoi/filter/reports/Facial-landmarks-detection--VmlldzoxMDMyNjg3NQ?accessToken=097wbm2usin1yazeqdmg7p5zy3nze33q31mteh068wq0q1j7630m2dstm1ldxmge)
+
+[Final App](app/)

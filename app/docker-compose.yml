@@ -1,0 +1,7 @@
+services:
+  filter-app:
+    build: .
+    image: face-filter-app:latest
+    container_name: face-filter-app
+    ports:
+      - "7860:7860"

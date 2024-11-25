@@ -1,0 +1,6 @@
+gradio==5.5.0
+gradio-webrtc==0.0.12
+mediapipe==0.10.18
+onnx==1.17.0
+onnxruntime==1.20.0
+protobuf==4.25.5

@@ -8,6 +8,8 @@ class ResNet(nn.Module):
         super().__init__()
         self.network = models.get_model(name="resnet18", weights=weights)
         self.network.fc = nn.Linear(self.network.fc.in_features, 136)
+        for p in self.network.parameters():
+            p.requires_grad = True
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.network(x)
